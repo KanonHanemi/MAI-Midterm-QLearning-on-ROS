@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from robot import Robot, Obstacle
+from object import Robot, Obstacle
 from utils import collision_detect
 from laser import laser
 import numpy as np
@@ -42,13 +42,14 @@ def draw_map(robot, obs, ax):
 
 # 主動畫流程
 def run_simulation():
-    robot = Robot(150, 50, 90)
+    robot = Robot(150, 50, 90, -1)
     obs = Obstacle(150,150,20)
 
     fig, ax = plt.subplots(figsize=(6, 6))
 
     def update(frame):
         if not collision_detect(robot, obs):
+            robot.turn_around(step=1)
             robot.move_forward(step=2)  # 每次移動2單位
         draw_map(robot, obs, ax)
 

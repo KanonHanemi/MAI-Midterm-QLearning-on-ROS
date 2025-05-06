@@ -26,5 +26,6 @@ def laser(robot, obs):
             break
 
         result.append(dist)
+    print(result)
 
     return result
