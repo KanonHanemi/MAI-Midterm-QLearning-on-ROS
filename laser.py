@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import numpy as np
 
 def laser(robot, obs):
@@ -6,13 +8,13 @@ def laser(robot, obs):
     result = []
 
     for angle in angles:
-        theta = np.radians(robot.t + angle)
+        theta = robot.t + np.deg2rad(angle)
         x0, y0 = robot.x, robot.y
         dist = max_range
 
         for r in range(1, max_range + 1):
-            x = x0 + r * np.sin(theta)
-            y = y0 + r * np.cos(theta)
+            x = x0 + r * np.cos(theta)
+            y = y0 + r * np.sin(theta)
 
             if x < 0 or x > 300 or y < 0 or y > 300:
                 dist = r
@@ -26,6 +28,6 @@ def laser(robot, obs):
             break
 
         result.append(dist)
-    print(result)
+    # print(result)
 
     return result
