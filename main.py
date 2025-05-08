@@ -78,28 +78,28 @@ for Epi in range(Episode):
         robot_t.move(a)
         R, Terminal = reward(robot_t, a, obs, goal)
         
+        twist = Twist()
+        if a == 2:
+            twist.linear.x = 0.15
+        elif a == 1:
+            twist.linear.x = 0.15
+            twist.angular.z = -0.262
+        elif a == 3:
+            twist.linear.x = 0.15
+            twist.angular.z = 0.262
+        elif a == 0:
+            twist.linear.x = 0.15
+            twist.angular.z = -0.524
+        else:
+            twist.linear.x = 0.15
+            twist.angular.z = 0.524
+        pub.publish(twist)
+        
         # Assuming GetLaser is implemented elsewhere
         # laser_data = laser(robot_t, obs)
         
         robot_t_1 = copy.copy(robot_t)
         a, Wt, J = Q_learning(a, W, robot_t, goal, laser_data, R, Terminal)
-        
-        twist = Twist()
-        if a == 0:
-            twist.linear.x = 0.15
-        elif a == 1:
-            twist.linear.x = 0.15
-            twist.angular.z = -0.262
-        elif a == 2:
-            twist.linear.x = 0.15
-            twist.angular.z = 0.262
-        elif a == 3:
-            twist.linear.x = 0.15
-            twist.angular.z = -0.524
-        elif a == 4:
-            twist.linear.x = 0.15
-            twist.angular.z = 0.524
-        pub.publish(twist)
         
         draw_map(robot_t, obs, ax) 
         W = Wt
