@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import numpy as np
 from q_learning import Q_learning
 from reward import reward
@@ -12,11 +13,14 @@ import rospy
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
 import math
+global laser_data
+
+laser_data = [0.0] * 5  # 或用 None 預設都為 0.0 公尺
 
 
 Episode = 20
 
-goal = Goal(150, 250)
+goal = Goal(0, 184)
 obs = Obstacle(150, 150, 30)
 robot0 = Robot(150, 50, np.pi/2, 0)
 W = np.ones(6)
@@ -35,7 +39,7 @@ desired_degrees = [0, 15, 30, 330, 345]
 desired_indices = []
 
 def scan_callback(msg):
-    global desired_indices, laser_ready, laser_features
+    global desired_indices, laser_ready, laser_data
 
     if not desired_indices:
         # 第一次收到的時候建立索引對應（只做一次）
@@ -50,7 +54,8 @@ def scan_callback(msg):
                 desired_indices.append(idx)
 
     # 取得五個對應角度的距離資料
-    laser_features = [msg.ranges[i] for i in desired_indices]
+    laser_data = [100 * msg.ranges[i] for i in desired_indices]
+    # print(laser_data)
     laser_ready = True
     
 laser_ready = False
@@ -60,23 +65,28 @@ rospy.init_node('q_learning_controller')
 rospy.Subscriber('/scan', LaserScan, scan_callback)
 pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 rate = rospy.Rate(10)  # 每 0.1 秒
+# rospy.spin()
 
-
+lock = False
 for Epi in range(Episode):
+    if (lock):
+        break
     Terminal = False
     robot_t_1 = copy.copy(robot0)
     a = 0  # Python uses 0-based indexing for actions
-    
     print(f'Episode={Epi+1}')  # Python is 0-based but we display 1-based like MATLAB
     while not Terminal and not rospy.is_shutdown():
+        if (Terminal == 2):
+            lock = True
+            break
         if not laser_ready:
             continue
         laser_ready = False
-        
-        
+        print("laser:")
+        print(laser_data)
         robot_t = robot_t_1
         robot_t.move(a)
-        R, Terminal = reward(robot_t, a, obs, goal)
+        R, Terminal = reward(robot_t, a, laser_data, goal)
         
         twist = Twist()
         if a == 2:
@@ -93,15 +103,20 @@ for Epi in range(Episode):
         else:
             twist.linear.x = 0.15
             twist.angular.z = 0.524
+
+        twist.linear.x = twist.linear.x * 0.5
         pub.publish(twist)
         
+        # print(twist.linear.x)
+        # print(twist.angular.z)
         # Assuming GetLaser is implemented elsewhere
         # laser_data = laser(robot_t, obs)
         
         robot_t_1 = copy.copy(robot_t)
         a, Wt, J = Q_learning(a, W, robot_t, goal, laser_data, R, Terminal)
         
-        draw_map(robot_t, obs, ax) 
+        # draw_map(robot_t, obs, ax) 
         W = Wt
-        rate.sleep()
         # print(W)
+        rate.sleep()
+        #
